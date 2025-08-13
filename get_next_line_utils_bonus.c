@@ -3,90 +3,112 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_utils_bonus.c                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Micampil <micampil@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: micampil <micampil@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/10 17:00:18 by Micampil          #+#    #+#             */
-/*   Updated: 2025/06/15 18:10:26 by Micampil         ###   ########.fr       */
+/*   Updated: 2025/08/13 17:46:14 by micampil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line_bonus.h"
 
-size_t	ft_strlen(const char *str)
+int	find_new_line(char *buff, int fd)
 {
 	int	i;
 
 	i = 0;
-	while (str[i])
+	while (*(buff + fd * (BUFFER_SIZE + 1) + i) && *(buff + fd * (BUFFER_SIZE
+				+ 1) + i) != '\n')
 		i++;
 	return (i);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_handle_new_line(char *buff, char *result, int i, int fd)
 {
-	int		size;
-	char	*result;
-	int		i;
-	int		j;
+	int	r;
+	int	k;
 
-	i = 0;
-	size = ft_strlen(s1) + ft_strlen(s2);
-	result = malloc(sizeof(char) * (size + 1));
-	if (!result || !s1 || !s2)
+	result = ft_rezise(result, i, &k);
+	if (!result)
 		return (NULL);
-	while (s1[i] != '\0')
+	r = 0;
+	while (r <= i)
 	{
-		result[i] = s1[i];
-		i++;
+		result[k] = *(buff + fd * (BUFFER_SIZE + 1) + r);
+		*(buff + fd * (BUFFER_SIZE + 1) + r) = '\0';
+		r++;
+		k++;
 	}
-	j = 0;
-	while (s2[j] != '\0')
-	{
-		result[i] = s2[j];
-		i++;
-		j++;
-	}
-	result[size] = '\0';
+	result[k] = '\0';
 	return (result);
 }
 
-char	*ft_strchr(const char *string, int to_find)
+char	*ft_process_buffer(char *buff, int i, int fd)
 {
-	char	*str;
+	int	k;
 
-	str = (char *)string;
-	while (*str != to_find && *str != 0)
-		str++;
-	if (*str == to_find)
-		return (str);
-	else
-		return (NULL);
+	k = 0;
+	while (*(buff + fd * (BUFFER_SIZE + 1) + i) && i < BUFFER_SIZE)
+	{
+		*(buff + fd * (BUFFER_SIZE + 1) + k) = *(buff + fd * (BUFFER_SIZE + 1)
+				+ i);
+		*(buff + fd * (BUFFER_SIZE + 1) + i) = '\0';
+		i++;
+		k++;
+	}
+	return (buff);
 }
 
-void	ft_bzero(void *s, size_t n)
+char	*get_next_line_cont(int fd, char *buffer, char *result, int bytes_read)
 {
-	unsigned char	*ptr;
+	int	i;
 
-	ptr = (unsigned char *)s;
-	while (n > 0)
+	result = NULL;
+	while (bytes_read)
 	{
-		*ptr = 0;
-		ptr++;
-		n--;
+		if (bytes_read != -2)
+		{
+			i = find_new_line(buffer, fd);
+			result = ft_handle_new_line(buffer, result, i, fd);
+			if (!result)
+				return (NULL);
+			buffer = ft_process_buffer(buffer, i + 1, fd);
+			if (result[i] && i < BUFFER_SIZE)
+				return (result);
+		}
+		bytes_read = read(fd, buffer + fd * (BUFFER_SIZE + 1), BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (free(result), NULL);
+		*(buffer + fd * (BUFFER_SIZE + 1) + bytes_read) = '\0';
 	}
+	if (!bytes_read && !result)
+		return (NULL);
+	return (result);
 }
 
-void	*ft_calloc(size_t count, size_t size)
+char	*ft_rezise(char *result, int i, int *r)
 {
-	void *ptr;
+	char	*new_result;
 
-	if (count == 0 || size == 0)
+	*r = 0;
+	if (result)
+		while (result[*r])
+			(*r)++;
+	new_result = malloc(i + *r + 2);
+	if (!new_result)
 	{
-		return (malloc(0));
-	}
-	ptr = malloc(count * size);
-	if (!ptr)
+		if (result)
+			free(result);
 		return (NULL);
-	ft_bzero(ptr, count * size);
-	return (ptr);
+	}
+	if (!result)
+		return (new_result);
+	*r = 0;
+	while (result[*r])
+	{
+		new_result[*r] = result[*r];
+		(*r)++;
+	}
+	free(result);
+	return (new_result);
 }
