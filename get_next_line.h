@@ -6,7 +6,7 @@
 /*   By: Micampil <micampil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/10 17:00:23 by Micampil          #+#    #+#             */
-/*   Updated: 2025/06/15 17:10:46 by Micampil         ###   ########.fr       */
+/*   Updated: 2025/08/12 22:18:35 by Micampil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,17 +17,17 @@
 #  define BUFFER_SIZE 42
 # endif
 
+# include <fcntl.h>
+# include <stddef.h>
+# include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
 
-// MAIN
 char	*get_next_line(int fd);
-
-//  UTILS
-size_t	ft_strlen(const char *str);
-char	*ft_strjoin(char const *s1, char const *s2);
-char	*ft_strchr(const char *string, int to_find);
-void	ft_bzero(void *s, size_t n);
-void	*ft_calloc(size_t count, size_t size);
+char	*get_next_line_cont(int fd, char *buffer, char *result, int bytes_read);
+int		find_new_line(char *buff);
+char	*ft_handle_new_line(char *buff, char *result, int i);
+char	*ft_process_buffer(char *buff, int i);
+char	*ft_rezise(char *result, int i, int *r);
 
 #endif
