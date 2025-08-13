@@ -1,4 +1,4 @@
-	/* ************************************************************************** */
+/* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
@@ -6,111 +6,72 @@
 /*   By: Micampil <micampil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/10 17:00:20 by Micampil          #+#    #+#             */
-/*   Updated: 2025/06/15 17:37:34 by Micampil         ###   ########.fr       */
+/*   Updated: 2025/08/12 20:31:08 by Micampil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*ft_join_and_free(char *storage, char *buffer)
-{
-	char	*result;
-
-	result = ft_strjoin(storage, buffer);
-	free(storage);
-	return (result);
-}
-
-char	*ft_extract_line(char *storage)
-{
-	int		i;
-	char	*line;
-
-	i = 0;
-	while (storage[i] && storage[i] != '\n')
-		i++;
-	if (storage[i] == '\n')
-		i++;
-	line = malloc(i + 1);
-	if (!line)
-		return (NULL);
-	line[i] = '\0';
-	while (i--)
-		line[i] = storage[i];
-	return (line);
-}
-
-char	*ft_update_storage(char *storage)
-{
-	int		i;
-	int		j;
-	char	*new_storage;
-
-	i = 0;
-	while (storage[i] && storage[i] != '\n')
-		i++;
-	if (storage[i] == '\n')
-		i++;
-	if (!storage[i])
-	{
-		free(storage);
-		return (NULL);
-	}
-	new_storage = malloc(ft_strlen(storage) - i + 1);
-	if (!new_storage)
-		return (NULL);
-	j = 0;
-	while (storage[i])
-		new_storage[j++] = storage[i++];
-	new_storage[j] = '\0';
-	free(storage);
-	return (new_storage);
-}
-
-char	*read_buffer(int fd, char *storage)
-{
-	char	*buffer;
-	int		bytes_read;
-
-	buffer = ft_calloc(BUFFER_SIZE + 1, sizeof(char));
-	if (!buffer)
-		return (NULL);
-	bytes_read = 1;
-	while (!ft_strchr(storage, '\n') && bytes_read > 0)
-	{
-		bytes_read = read(fd, buffer, BUFFER_SIZE);
-		if (bytes_read <= 0)
-			break ;
-		buffer[bytes_read] = '\0';
-		storage = ft_join_and_free(storage, buffer);
-	}
-	free(buffer);
-	return (storage);
-}
-
 char	*get_next_line(int fd)
 {
-	static char	*storage = NULL;
-	char		*line;
+	static char	buffer[BUFFER_SIZE + 1];
+	char		*result;
+	int			bytes_read;
 
-	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
-	{
-		free(storage);
-		storage = NULL;
+	result = NULL;
+	bytes_read = 1;
+	if (!buffer[0])
+		bytes_read = -2;
+	if (fd < 0 || fd >= FOPEN_MAX || BUFFER_SIZE < 1)
 		return (NULL);
-	}
-	if (!storage)
-		storage = ft_calloc(1, 1);
-	if (!storage)
-		return (NULL);
-	storage = read_buffer(fd, storage);
-	if (!storage || !*storage)
-	{
-		free(storage);
-		storage = NULL;
-		return (NULL);
-	}
-	line = ft_extract_line(storage);
-	storage = ft_update_storage(storage);
-	return (line);
+	return (get_next_line_cont(fd, buffer, result, bytes_read));
 }
+// int	main(int argc, char **argv)
+// {
+// 	int		fd;
+// 	char	*line;
+// 	int		line_number;
+
+// 	line_number = 1;
+// 	if (argc != 2)
+// 	{
+// 		printf("Usage: %s <file>\n", argv[0]);
+// 		return (1);
+// 	}
+// 	fd = open(argv[1], O_RDONLY);
+// 	if (fd == -1)
+// 	{
+// 		perror("Error opening file");
+// 		return (1);
+// 	}
+// 	line = get_next_line(fd);
+// 	printf("Line %d: %s", line_number, line);
+// 	free(line);
+// 	line_number++;
+// 	close(fd);
+// 	return (0);
+// }
+
+// // int	main(int argc, char **argv)
+// // {
+// // 	int		fd;
+// // 	char	*result;
+// // 	int		i;
+
+// // 	i = 1;
+// // 	if (argc > 1)
+// // 	{
+// // 		fd = open(argv[1], O_RDONLY);
+// // 		result = get_next_line(fd);
+// // 		while (result != NULL)
+// // 		{
+// // 			printf("call #%d: %s", i, result);
+// // 			free(result);
+// // 			result = get_next_line(fd);
+// // 			i++;
+// // 		}
+// // 		free(result);
+// // 		if (fd != -1)
+// // 			close(fd);
+// // 	}
+// // }
